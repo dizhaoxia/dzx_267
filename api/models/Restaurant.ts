@@ -1,0 +1,76 @@
+import { DataTypes, Model } from 'sequelize'
+import { sequelize } from '../config/db'
+
+export type RestaurantStatus = 'published' | 'offline'
+
+export class Restaurant extends Model {
+  declare id: number
+  declare merchantId: number
+  declare name: string
+  declare address: string
+  declare categoryId: number
+  declare longitude: number | null
+  declare latitude: number | null
+  declare phone: string | null
+  declare businessHours: string | null
+  declare tags: string | null
+  declare description: string | null
+  declare coverImage: string | null
+  declare coverThumb: string | null
+  declare status: RestaurantStatus
+  declare avgRating: number
+  declare ratingCount: number
+  declare createdAt: Date
+  declare updatedAt: Date
+}
+
+Restaurant.init(
+  {
+    merchantId: { type: DataTypes.INTEGER, allowNull: false },
+    name: { type: DataTypes.STRING(100), allowNull: false },
+    address: { type: DataTypes.STRING(255), allowNull: false },
+    categoryId: { type: DataTypes.INTEGER, allowNull: false },
+    longitude: {
+      type: DataTypes.DECIMAL(10, 7),
+      allowNull: true,
+      validate: { min: -180, max: 180 },
+    },
+    latitude: {
+      type: DataTypes.DECIMAL(10, 7),
+      allowNull: true,
+      validate: { min: -90, max: 90 },
+    },
+    phone: { type: DataTypes.STRING(30), allowNull: true },
+    businessHours: { type: DataTypes.STRING(100), allowNull: true },
+    tags: { type: DataTypes.STRING(500), allowNull: true },
+    description: { type: DataTypes.TEXT, allowNull: true },
+    coverImage: { type: DataTypes.STRING(500), allowNull: true },
+    coverThumb: { type: DataTypes.STRING(500), allowNull: true },
+    status: {
+      type: DataTypes.ENUM('published', 'offline'),
+      allowNull: false,
+      defaultValue: 'published',
+    },
+    avgRating: {
+      type: DataTypes.DECIMAL(2, 1),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    ratingCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'restaurants',
+    modelName: 'Restaurant',
+    underscored: true,
+    indexes: [
+      { fields: ['merchant_id'] },
+      { fields: ['category_id'] },
+      { fields: ['status'] },
+    ],
+  },
+)
