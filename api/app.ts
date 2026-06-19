@@ -71,11 +71,41 @@ app.use((error: unknown, req: Request, res: Response) => {
     })
     return
   }
-  // multer file filter errors surface as plain Errors
-  if (error instanceof Error && error.message.startsWith('仅支持')) {
-    res.status(400).json({ success: false, error: error.message })
-    return
+
+  if (error instanceof Error) {
+    // multer file filter errors surface as plain Errors
+    if (error.message.startsWith('仅支持')) {
+      res.status(400).json({ success: false, error: error.message })
+      return
+    }
+
+    // multer: file too large (code = LIMIT_FILE_SIZE)
+    // @ts-expect-error MulterError is a class with a `code` field
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({ success: false, error: '上传图片过大，最大支持 10MB' })
+      return
+    }
+    // multer: too many files / unexpected field
+    // @ts-expect-error MulterError has `code`
+    if (typeof error.code === 'string' && error.code.startsWith('LIMIT_')) {
+      res.status(400).json({ success: false, error: '文件上传参数异常' })
+      return
+    }
+
+    // express.json / urlencoded: payload too large
+    // @ts-expect-error http-errors style `type` field
+    if (error.type === 'entity.too.large' || error.message?.includes('too large')) {
+      res.status(413).json({ success: false, error: '请求体过大，请减少数据后重试' })
+      return
+    }
+    // express.json: malformed JSON body
+    // @ts-expect-error SyntaxError has a body-parsing subtype
+    if (error.type === 'entity.parse.failed' || error instanceof SyntaxError) {
+      res.status(400).json({ success: false, error: '请求数据格式错误，请检查输入' })
+      return
+    }
   }
+
   console.error('[unhandled error]', error)
   res.status(500).json({
     success: false,
