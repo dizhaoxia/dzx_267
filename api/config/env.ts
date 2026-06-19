@@ -32,9 +32,16 @@ export const env = {
 
 export const UPLOAD_DIRS = {
   restaurants: path.join(env.uploadRoot, 'restaurants'),
+  checkins: path.join(env.uploadRoot, 'checkins'),
+  reviews: path.join(env.uploadRoot, 'reviews'),
 }
 
-/** Make sure upload destination directories exist on disk. */
+export const UPLOAD_URL_PREFIX = {
+  restaurants: '/uploads/restaurants',
+  checkins: '/uploads/checkins',
+  reviews: '/uploads/reviews',
+}
+
 export function ensureUploadDirs(): void {
   for (const dir of Object.values(UPLOAD_DIRS)) {
     fs.mkdirSync(dir, { recursive: true })

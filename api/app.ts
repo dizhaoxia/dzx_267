@@ -14,6 +14,10 @@ import authRoutes from './routes/auth.js'
 import categoryRoutes from './routes/categories.js'
 import restaurantRoutes from './routes/restaurants.js'
 import uploadRoutes from './routes/uploads.js'
+import checkinRoutes from './routes/checkins.js'
+import reviewRoutes from './routes/reviews.js'
+import favoriteRoutes from './routes/favorites.js'
+import userRoutes from './routes/users.js'
 import { ApiError } from './utils/http.js'
 import { env } from './config/env.js'
 
@@ -45,6 +49,10 @@ app.use('/api/auth', authRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/restaurants', restaurantRoutes)
 app.use('/api/uploads', uploadRoutes)
+app.use('/api/checkins', checkinRoutes)
+app.use('/api/reviews', reviewRoutes)
+app.use('/api/favorites', favoriteRoutes)
+app.use('/api/users', userRoutes)
 
 /**
  * health

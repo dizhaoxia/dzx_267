@@ -6,6 +6,7 @@ export interface PublicUser {
   email: string | null
   name: string
   role: UserRole
+  createdAt?: string
 }
 
 export interface Category {
@@ -39,6 +40,51 @@ export interface Restaurant {
   merchant?: { id: number; name: string }
 }
 
+export interface RestaurantSummary {
+  id: number
+  name: string
+  coverImage: string | null
+  coverThumb: string | null
+  address: string
+}
+
+export interface Checkin {
+  id: number
+  userId: number
+  restaurantId: number
+  latitude: number
+  longitude: number
+  distance: number
+  photos: string | null
+  photoThumbs: string | null
+  createdAt: string
+  updatedAt: string
+  user?: { id: number; name: string }
+  restaurant?: RestaurantSummary
+}
+
+export interface Review {
+  id: number
+  userId: number
+  restaurantId: number
+  rating: number
+  content: string | null
+  photos: string | null
+  photoThumbs: string | null
+  createdAt: string
+  updatedAt: string
+  user?: { id: number; name: string }
+  restaurant?: RestaurantSummary
+}
+
+export interface Favorite {
+  id: number
+  userId: number
+  restaurantId: number
+  createdAt: string
+  restaurant?: Restaurant & { category?: Pick<Category, 'id' | 'name'> }
+}
+
 export interface Paginated<T> {
   list: T[]
   total: number
@@ -47,7 +93,6 @@ export interface Paginated<T> {
   totalPages: number
 }
 
-/** Shape of every backend JSON envelope: { success, data, error? } */
 export interface ApiEnvelope<T> {
   success: boolean
   data: T
@@ -63,4 +108,28 @@ export interface RestaurantQuery {
   maxLng?: number
   page?: number
   pageSize?: number
+}
+
+export interface CheckinCreatePayload {
+  restaurantId: number
+  latitude: number
+  longitude: number
+  photos?: File[]
+}
+
+export interface ReviewCreatePayload {
+  restaurantId: number
+  rating: number
+  content?: string
+  photos?: File[]
+}
+
+export function parsePhotoArray(raw: string | null): string[] {
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? (arr as string[]) : []
+  } catch {
+    return []
+  }
 }

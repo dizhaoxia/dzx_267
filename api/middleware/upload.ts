@@ -4,64 +4,75 @@ import crypto from 'crypto'
 import fs from 'fs'
 import sharp from 'sharp'
 import type { Request } from 'express'
-import { UPLOAD_DIRS } from '../config/env'
+import { UPLOAD_DIRS, UPLOAD_URL_PREFIX } from '../config/env'
+
+export type UploadCategory = 'restaurants' | 'checkins' | 'reviews'
 
 const ALLOWED = /jpeg|jpg|png|webp/
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    fs.mkdirSync(UPLOAD_DIRS.restaurants, { recursive: true })
-    cb(null, UPLOAD_DIRS.restaurants)
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
-    const base = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
-    cb(null, `${base}${ext}`)
-  },
-})
+function createStorage(category: UploadCategory) {
+  return multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      fs.mkdirSync(UPLOAD_DIRS[category], { recursive: true })
+      cb(null, UPLOAD_DIRS[category])
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
+      const base = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
+      cb(null, `${base}${ext}`)
+    },
+  })
+}
 
-const fileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: (error: Error | null, acceptFile: boolean) => void,
-) => {
-  if (ALLOWED.test(file.mimetype)) {
-    cb(null, true)
-  } else {
-    cb(new Error('仅支持 jpg/png/webp 图片格式'), false)
+function createFileFilter() {
+  return (
+    _req: Request,
+    file: Express.Multer.File,
+    cb: (error: Error | null, acceptFile: boolean) => void,
+  ) => {
+    if (ALLOWED.test(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('仅支持 jpg/png/webp 图片格式'), false)
+    }
   }
 }
 
-/** Single file upload for a restaurant cover image (form field: "cover"). */
+export function createMulter(category: UploadCategory, maxCount: number, fieldName = 'photos') {
+  return multer({
+    storage: createStorage(category),
+    fileFilter: createFileFilter(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+  }).array(fieldName, maxCount)
+}
+
 export const uploadCover = multer({
-  storage,
-  fileFilter,
+  storage: createStorage('restaurants'),
+  fileFilter: createFileFilter(),
   limits: { fileSize: 10 * 1024 * 1024 },
 }).single('cover')
 
-/**
- * Generate a 480px-wide JPEG thumbnail next to the source image.
- * Returns the public URL path of the thumbnail.
- */
-export async function makeThumbnail(srcFilename: string): Promise<string> {
+export async function makeThumbnail(
+  srcFilename: string,
+  category: UploadCategory = 'restaurants',
+  size = 480,
+): Promise<string> {
   const ext = path.extname(srcFilename)
   const base = path.basename(srcFilename, ext)
-  const srcPath = path.join(UPLOAD_DIRS.restaurants, srcFilename)
+  const srcPath = path.join(UPLOAD_DIRS[category], srcFilename)
   const thumbName = `${base}_thumb.jpg`
-  const destPath = path.join(UPLOAD_DIRS.restaurants, thumbName)
+  const destPath = path.join(UPLOAD_DIRS[category], thumbName)
   await sharp(srcPath)
-    .resize({ width: 480, withoutEnlargement: true })
+    .resize({ width: size, height: size, fit: 'cover', withoutEnlargement: true })
     .jpeg({ quality: 80 })
     .toFile(destPath)
-  return `/uploads/restaurants/${thumbName}`
+  return `${UPLOAD_URL_PREFIX[category]}/${thumbName}`
 }
 
-/** Convert an on-disk filename to its public URL path. */
-export function toPublicUrl(filename: string): string {
-  return `/uploads/restaurants/${filename}`
+export function toPublicUrl(filename: string, category: UploadCategory = 'restaurants'): string {
+  return `${UPLOAD_URL_PREFIX[category]}/${filename}`
 }
 
-/** Remove a cover image and its thumbnail from disk (best effort). */
 export function removeCoverFiles(coverUrl: string | null | undefined): void {
   if (!coverUrl) return
   const filename = path.basename(coverUrl)
@@ -78,4 +89,24 @@ export function removeCoverFiles(coverUrl: string | null | undefined): void {
       }
     }
   }
+}
+
+export interface ProcessedPhotos {
+  urls: string[]
+  thumbUrls: string[]
+}
+
+export async function processUploadedPhotos(
+  files: Express.Multer.File[],
+  category: UploadCategory,
+  thumbSize = 200,
+): Promise<ProcessedPhotos> {
+  const urls: string[] = []
+  const thumbUrls: string[] = []
+  for (const file of files) {
+    urls.push(toPublicUrl(file.filename, category))
+    const thumb = await makeThumbnail(file.filename, category, thumbSize)
+    thumbUrls.push(thumb)
+  }
+  return { urls, thumbUrls }
 }

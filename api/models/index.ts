@@ -2,31 +2,37 @@ import { sequelize } from '../config/db'
 import { User } from './User'
 import { Category } from './Category'
 import { Restaurant } from './Restaurant'
+import { Checkin } from './Checkin'
+import { Review } from './Review'
+import { Favorite } from './Favorite'
 
-export { User, Category, Restaurant }
+export { User, Category, Restaurant, Checkin, Review, Favorite }
 
-/**
- * Wire up associations.
- * With `underscored: true`, attribute keys are camelCase and column names are snake_case.
- */
 User.hasMany(Restaurant, { foreignKey: 'merchantId', as: 'restaurants' })
 Restaurant.belongsTo(User, { foreignKey: 'merchantId', as: 'merchant' })
 
 Category.hasMany(Restaurant, { foreignKey: 'categoryId', as: 'restaurants' })
 Restaurant.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
 
-/**
- * Create tables if they do not exist (does NOT alter existing tables).
- */
+User.hasMany(Checkin, { foreignKey: 'userId', as: 'checkins' })
+Checkin.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+Restaurant.hasMany(Checkin, { foreignKey: 'restaurantId', as: 'checkins' })
+Checkin.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'restaurant' })
+
+User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' })
+Review.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+Restaurant.hasMany(Review, { foreignKey: 'restaurantId', as: 'reviews' })
+Review.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'restaurant' })
+
+User.hasMany(Favorite, { foreignKey: 'userId', as: 'favorites' })
+Favorite.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+Restaurant.hasMany(Favorite, { foreignKey: 'restaurantId', as: 'favorites' })
+Favorite.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'restaurant' })
+
 export async function syncModels(): Promise<void> {
   await sequelize.sync()
 }
 
-/**
- * Ensure a FULLTEXT index with the ngram parser exists on
- * (name, address, tags) so Chinese full-text search works on MySQL 8+.
- * Sequelize cannot declare `WITH PARSER ngram` via model options, so we add it manually.
- */
 export async function ensureFullTextIndex(): Promise<void> {
   const [rows] = (await sequelize.query(
     `SHOW INDEX FROM restaurants WHERE Key_name = 'ft_name_addr_tags'`,
