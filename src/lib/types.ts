@@ -34,6 +34,8 @@ export interface Restaurant {
   status: RestaurantStatus
   avgRating: number
   ratingCount: number
+  hotScore?: number
+  ratingScore?: number
   createdAt: string
   updatedAt: string
   category?: Pick<Category, 'id' | 'name'>
@@ -108,6 +110,7 @@ export interface RestaurantQuery {
   maxLng?: number
   page?: number
   pageSize?: number
+  sort?: 'hot' | 'rating'
 }
 
 export interface CheckinCreatePayload {

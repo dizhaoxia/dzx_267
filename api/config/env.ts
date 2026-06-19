@@ -24,6 +24,12 @@ export const env = {
     secret: process.env.JWT_SECRET || 'food_discovery_dev_secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
+  cron: {
+    enabled: process.env.CRON_ENABLED !== 'false',
+    // 每日凌晨 02:00 触发热度聚合任务（node-cron 5 段式：分 时 日 月 周）
+    expression: process.env.CRON_EXPRESSION || '0 2 * * *',
+    lockDir: path.resolve(PROJECT_ROOT, process.env.CRON_LOCK_DIR || '.cache'),
+  },
   uploadRoot: path.resolve(
     PROJECT_ROOT,
     process.env.UPLOAD_ROOT || 'public/uploads',

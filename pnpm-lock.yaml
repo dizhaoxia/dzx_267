@@ -41,6 +41,9 @@ importers:
       mysql2:
         specifier: ^3.22.5
         version: 3.22.5(@types/node@22.19.21)
+      node-cron:
+        specifier: ^4.4.1
+        version: 4.4.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2231,6 +2234,10 @@ packages:
   negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
+
+  node-cron@4.4.1:
+    resolution: {integrity: sha512-1e4Gku1qeKx1ywNnMoA0o5hiZ8iA4klH84TIszTHZAME68xVIjLkiBo5KrtowbcOJn8MQqJG/yWHjC/dFdMWyQ==}
+    engines: {node: '>=20'}
 
   node-fetch@2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
@@ -4937,6 +4944,8 @@ snapshots:
   natural-compare@1.4.0: {}
 
   negotiator@0.6.3: {}
+
+  node-cron@4.4.1: {}
 
   node-fetch@2.6.9:
     dependencies:

@@ -19,6 +19,9 @@ dist-ssr
 # uploaded media
 public/uploads
 
+# cron lock files
+.cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

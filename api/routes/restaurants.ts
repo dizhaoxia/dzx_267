@@ -29,7 +29,10 @@ function toNumberOrNull(v: unknown): number | null {
 
 /**
  * GET /api/restaurants  (public)
- * query: keyword, categoryId, minLat, maxLat, minLng, maxLng, page, pageSize
+ * query: keyword, categoryId, minLat, maxLat, minLng, maxLng, page, pageSize, sort
+ *   sort=hot     -> 热度榜：ORDER BY hot_score DESC, rating_score DESC, created_at DESC
+ *   sort=rating  -> 好评榜：ORDER BY rating_score DESC, rating_count DESC, created_at DESC
+ *   (default)    -> 最新：ORDER BY created_at DESC
  */
 router.get(
   '/',
@@ -38,6 +41,18 @@ router.get(
     const page = Math.max(Number(req.query.page) || 1, 1)
     const pageSize = clampPageSize(req.query.pageSize)
     const offset = (page - 1) * pageSize
+
+    const sort = String(req.query.sort ?? '').toLowerCase()
+    const order: [string, string][] =
+      sort === 'hot'
+        ? [['hot_score', 'DESC'], ['rating_score', 'DESC'], ['created_at', 'DESC']]
+        : sort === 'rating'
+          ? [
+              ['rating_score', 'DESC'],
+              ['rating_count', 'DESC'],
+              ['created_at', 'DESC'],
+            ]
+          : [['created_at', 'DESC']]
 
     const ands: WhereOptions[] = [{ status: 'published' }]
 
@@ -71,7 +86,7 @@ router.get(
       where,
       attributes: LIST_ATTRIBUTES,
       include: [{ model: Category, as: 'category', attributes: ['id', 'name'] }],
-      order: [['created_at', 'DESC']],
+      order,
       limit: pageSize,
       offset,
       distinct: true,

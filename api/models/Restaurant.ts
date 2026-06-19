@@ -20,6 +20,8 @@ export class Restaurant extends Model {
   declare status: RestaurantStatus
   declare avgRating: number
   declare ratingCount: number
+  declare hotScore: number
+  declare ratingScore: number
   declare createdAt: Date
   declare updatedAt: Date
 }
@@ -61,12 +63,27 @@ Restaurant.init(
       allowNull: false,
       defaultValue: 0,
     },
+    hotScore: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+      comment: '热度分 = 近7天打卡数*0.6 + 近7天收藏数*0.4，由定时聚合任务更新',
+    },
+    ratingScore: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: false,
+      defaultValue: 0,
+      comment: '好评榜排序分，取 reviews 表 AVG(rating) 精确值，由定时聚合任务更新',
+    },
   },
   {
     sequelize,
     tableName: 'restaurants',
     modelName: 'Restaurant',
     underscored: true,
+    // NOTE: hot_score / rating_score 的索引不在此声明，而由 ensureRankingColumns()
+    // 在 ALTER TABLE 加列之后再创建。否则 sequelize.sync() 对已存在的旧表会先尝试
+    // 建索引（引用尚不存在的列）而报 ER_KEY_COLUMN_DOES_NOT_EXITS。
     indexes: [
       { fields: ['merchant_id'] },
       { fields: ['category_id'] },

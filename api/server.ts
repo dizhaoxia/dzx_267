@@ -6,6 +6,7 @@ import { env, ensureUploadDirs } from './config/env.js'
 import { sequelize, ensureDatabase } from './config/db.js'
 import { initDatabase } from './models/index.js'
 import { seedDefaults } from './seed.js'
+import { startScheduler, stopScheduler } from './tasks/scheduler.js'
 
 async function bootstrap() {
   // Make sure upload directories exist on disk.
@@ -16,7 +17,7 @@ async function bootstrap() {
   await sequelize.authenticate()
   console.log('[db] connected')
 
-  // Create tables + FULLTEXT(ngram) index.
+  // Create tables + FULLTEXT(ngram) index + ranking columns.
   await initDatabase()
 
   // Seed admin + default categories (idempotent).
@@ -27,21 +28,20 @@ async function bootstrap() {
     console.log(`Server ready on port ${PORT}`)
   })
 
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received')
-    server.close(() => {
-      console.log('Server closed')
-      process.exit(0)
-    })
-  })
+  // Start the in-process cron scheduler (daily hot-score aggregation).
+  startScheduler()
 
-  process.on('SIGINT', () => {
-    console.log('SIGINT signal received')
+  const shutdown = (signal: string) => {
+    console.log(`${signal} signal received`)
+    stopScheduler()
     server.close(() => {
       console.log('Server closed')
       process.exit(0)
     })
-  })
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
 }
 
 bootstrap().catch((err) => {
