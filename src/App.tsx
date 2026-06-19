@@ -9,6 +9,7 @@ import RestaurantDetail from '@/pages/RestaurantDetail'
 import MerchantDashboard from '@/pages/MerchantDashboard'
 import MerchantRestaurantForm from '@/pages/MerchantRestaurantForm'
 import AdminCategories from '@/pages/AdminCategories'
+import Profile from '@/pages/Profile'
 
 function Layout() {
   return (
@@ -46,6 +47,14 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/restaurants/:id" element={<RestaurantDetail />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/merchant"
               element={

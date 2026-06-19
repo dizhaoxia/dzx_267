@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { UtensilsCrossed, LogOut, Store, Tags } from 'lucide-react'
+import { UtensilsCrossed, LogOut, Store, Tags, UserCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
@@ -28,6 +28,12 @@ export default function Navbar() {
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <NavItem to="/">首页</NavItem>
+
+          {user && (
+            <NavItem to="/profile" icon={<UserCircle className="h-4 w-4" />}>
+              我的
+            </NavItem>
+          )}
 
           {user && (user.role === 'merchant' || user.role === 'admin') && (
             <NavItem to="/merchant" icon={<Store className="h-4 w-4" />}>
